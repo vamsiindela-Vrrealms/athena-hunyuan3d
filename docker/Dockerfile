@@ -47,10 +47,10 @@ SHELL ["/bin/bash", "-c"]
 # Python environment
 # -------------------------------------------------------
 RUN source /opt/conda/bin/activate athena && \
-    pip install --upgrade pip setuptools wheel
+    pip install --upgrade pip setuptools wheel ninja
 
 RUN source /opt/conda/bin/activate athena && \
-    pip install \
+    pip install --no-cache-dir \
         torch==2.5.1 \
         torchvision==0.20.1 \
         torchaudio==2.5.1 \
@@ -61,6 +61,13 @@ RUN source /opt/conda/bin/activate athena && \
 # -------------------------------------------------------
 WORKDIR /workspace
 
+COPY requirements-working.txt /tmp/requirements.txt
+
+RUN sed -i '/^bpy==/d' /tmp/requirements.txt
+
+RUN source /opt/conda/bin/activate athena && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
 COPY . /workspace/Hunyuan3D-2.1
 
 WORKDIR /workspace/Hunyuan3D-2.1
@@ -68,13 +75,6 @@ WORKDIR /workspace/Hunyuan3D-2.1
 # -------------------------------------------------------
 # Install project requirements
 # -------------------------------------------------------
-
-COPY requirements-working.txt /tmp/requirements.txt
-
-RUN sed -i '/^bpy==/d' /tmp/requirements.txt
-
-RUN source /opt/conda/bin/activate athena && \
-    pip install -r /tmp/requirements.txt
 
 # -------------------------------------------------------
 # Build rasterizer
@@ -105,4 +105,4 @@ ENV PATH=/opt/conda/envs/athena/bin:$PATH
 
 EXPOSE 8081
 
-CMD ["bash","-c","source /opt/conda/bin/activate athena && python api_server.py"]
+CMD ["python","api_server.py"]
