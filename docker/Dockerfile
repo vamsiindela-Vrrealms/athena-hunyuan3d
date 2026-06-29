@@ -30,7 +30,13 @@ COPY . .
 
 RUN pip install --upgrade pip setuptools wheel
 
-RUN pip install --no-cache-dir -r requirements-working.txt
+# Remove torch packages from requirements
+RUN grep -v "^torch==" requirements-working.txt | \
+    grep -v "^torchvision==" | \
+    grep -v "^torchaudio==" > /tmp/requirements.txt
+
+# Install remaining packages
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 RUN cd hy3dpaint/custom_rasterizer && \
     pip install --no-build-isolation -e .
