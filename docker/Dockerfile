@@ -30,7 +30,7 @@ COPY . .
 
 RUN pip install --upgrade pip setuptools wheel
 
-RUN pip install --no-cache-dir -r requirements-docker.txt
+RUN pip install --no-cache-dir -r requirements-working.txt
 
 RUN cd hy3dpaint/custom_rasterizer && \
     pip install --no-build-isolation -e .
