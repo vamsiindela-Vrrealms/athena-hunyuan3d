@@ -25,7 +25,6 @@ imageio==2.36.0
 scikit-image==0.24.0
 rembg==2.0.65
 realesrgan==0.3.0
-tb_nightly==2.18.0a20240726
 basicsr==1.4.2
 
 # 3D Mesh Processing
@@ -55,13 +54,11 @@ cupy-cuda12x==13.4.1
 
 
 # ONNX Runtime
-onnxruntime==1.16.3
-torchmetrics==1.6.0
+onnxruntime-gpu==1.16.3
 
 pydantic==2.10.6
 
 timm
 pythreejs
 torchdiffeq
-deepspeed
 

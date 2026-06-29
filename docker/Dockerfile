@@ -33,17 +33,19 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 
 RUN conda create -y -n athena python=3.10
 
-SHELL ["conda","run","-n","athena","/bin/bash","-c"]
+SHELL ["/bin/bash", "-c"]
 
-RUN pip install --upgrade pip
+RUN source /opt/conda/bin/activate athena && \ pip install --upgrade pip
 
-RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+RUN source /opt/conda/bin/activate athena && \ pip install wheel setuptools
+
+RUN source /opt/conda/bin/activate athena && \ pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 
 COPY requirements.txt /tmp/requirements.txt
 
 RUN sed -i '/^bpy==/d' /tmp/requirements.txt
 
-RUN pip install -r /tmp/requirements.txt
+RUN source /opt/conda/bin/activate athena && \ pip install -r /tmp/requirements.txt
 
 WORKDIR /workspace
 
@@ -54,7 +56,7 @@ WORKDIR /workspace/Hunyuan3D-2.1
 RUN cd hy3dpaint/custom_rasterizer && \
     pip install --no-build-isolation -e .
 
-RUN cd hy3dpaint/DifferentiableRenderer && \
+RUN source /opt/conda/bin/activate athena && \ cd hy3dpaint/DifferentiableRenderer && \
     bash compile_mesh_painter.sh
 
 RUN mkdir -p hy3dpaint/ckpt && \
