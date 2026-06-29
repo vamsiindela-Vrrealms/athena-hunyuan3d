@@ -39,7 +39,7 @@ ENV PATH=/opt/conda/bin:$PATH
 RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
-RUN conda create -y -n athena python=3.10
+RUN conda create -y -n athena python=3.12
 
 SHELL ["/bin/bash", "-c"]
 
