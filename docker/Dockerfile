@@ -2,6 +2,9 @@ FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# -------------------------------------------------------
+# System packages
+# -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -21,11 +24,15 @@ RUN apt-get update && apt-get install -y \
     python3-setuptools \
     cmake \
     libeigen3-dev \
-    libcgal-dev
+    libcgal-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh
+# -------------------------------------------------------
+# Install Miniconda
+# -------------------------------------------------------
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm miniconda.sh
 
 ENV PATH=/opt/conda/bin:$PATH
 
@@ -35,34 +42,66 @@ RUN conda create -y -n athena python=3.10
 
 SHELL ["/bin/bash", "-c"]
 
-RUN source /opt/conda/bin/activate athena && \ pip install --upgrade pip
+# -------------------------------------------------------
+# Python environment
+# -------------------------------------------------------
+RUN source /opt/conda/bin/activate athena && \
+    pip install --upgrade pip setuptools wheel
 
-RUN source /opt/conda/bin/activate athena && \ pip install wheel setuptools
+RUN source /opt/conda/bin/activate athena && \
+    pip install \
+        torch==2.5.1 \
+        torchvision==0.20.1 \
+        torchaudio==2.5.1 \
+        --index-url https://download.pytorch.org/whl/cu124
 
-RUN source /opt/conda/bin/activate athena && \ pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-
-COPY requirements.txt /tmp/requirements.txt
-
-RUN sed -i '/^bpy==/d' /tmp/requirements.txt
-
-RUN source /opt/conda/bin/activate athena && \ pip install -r /tmp/requirements.txt
-
+# -------------------------------------------------------
+# Copy repository
+# -------------------------------------------------------
 WORKDIR /workspace
 
-COPY third_party /workspace/Hunyuan3D-2.1
+COPY . /workspace/Hunyuan3D-2.1
 
 WORKDIR /workspace/Hunyuan3D-2.1
 
-RUN cd hy3dpaint/custom_rasterizer && \
+# -------------------------------------------------------
+# Install project requirements
+# -------------------------------------------------------
+
+COPY requirements-working.txt /tmp/requirements.txt
+
+RUN sed -i '/^bpy==/d' /tmp/requirements.txt
+
+RUN source /opt/conda/bin/activate athena && \
+    pip install -r /tmp/requirements.txt
+
+# -------------------------------------------------------
+# Build rasterizer
+# -------------------------------------------------------
+RUN source /opt/conda/bin/activate athena && \
+    cd hy3dpaint/custom_rasterizer && \
     pip install --no-build-isolation -e .
 
-RUN source /opt/conda/bin/activate athena && \ cd hy3dpaint/DifferentiableRenderer && \
+# -------------------------------------------------------
+# Build renderer
+# -------------------------------------------------------
+RUN source /opt/conda/bin/activate athena && \
+    cd hy3dpaint/DifferentiableRenderer && \
     bash compile_mesh_painter.sh
 
+# -------------------------------------------------------
+# Download ESRGAN checkpoint
+# -------------------------------------------------------
 RUN mkdir -p hy3dpaint/ckpt && \
-    wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth \
-    -P hy3dpaint/ckpt
+    wget -q \
+    https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth \
+    -O hy3dpaint/ckpt/RealESRGAN_x4plus.pth
+
+# -------------------------------------------------------
+# Runtime
+# -------------------------------------------------------
+ENV PATH=/opt/conda/envs/athena/bin:$PATH
 
 EXPOSE 8081
 
-CMD ["python","api_server.py"]
+CMD ["bash","-c","source /opt/conda/bin/activate athena && python api_server.py"]
