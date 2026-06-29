@@ -94,7 +94,6 @@ shellingham==1.5.4
 six==1.17.0
 starlette==0.47.2
 sympy==1.13.1
-tb-nightly==2.21.0a20251023
 tensorboard-data-server==0.7.2
 tifffile==2026.6.1
 timm==1.0.27
